@@ -1,0 +1,23 @@
+# SOPS configuration for encrypting secrets.yaml
+#
+# This file defines encryption rules and keys for SOPS.
+#
+# Setup:
+#   1. Copy this file: cp .sops.yaml.example .sops.yaml
+#   2. Generate your Age key: age-keygen -o ~/.config/sops/age/keys.txt
+#   3. Get your public key: grep 'public key:' ~/.config/sops/age/keys.txt
+#   4. Replace YOUR_AGE_PUBLIC_KEY_HERE in .sops.yaml with your actual public key
+#
+# For team collaboration:
+#   - Each team member generates their own Age key
+#   - Add all team members' public keys (comma-separated) to the age field
+#   - Everyone can then decrypt secrets.yaml with their own private key
+
+creation_rules:
+  - path_regex: secrets\.yaml$
+    age: >-
+      YOUR_AGE_PUBLIC_KEY_HERE
+    # Example with multiple keys:
+    # age: >-
+    #   age1abc123...,
+    #   age1xyz789...

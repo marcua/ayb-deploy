@@ -1,0 +1,86 @@
+# See https://kamal-deploy.org/docs/configuration/ for full documentation
+
+# Load configuration from secrets.yaml
+<% require 'json' %>
+<% require 'yaml' %>
+<%
+  # Decrypt and load secrets
+  secrets_yaml = `sops -d secrets.yaml 2>/dev/null`.strip
+  secrets = secrets_yaml.empty? ? {} : YAML.safe_load(secrets_yaml)
+  github_username = secrets.dig('kamal', 'github_username') || 'your-github-username'
+  domain = secrets.dig('kamal', 'domain') || 'your-domain.com'
+%>
+
+service: ayb
+image: <%= github_username %>/ayb-deploy
+
+# Servers are loaded dynamically from vps_instances.json using ERB templating
+# When you install a new VPS with ovh_tools.py install, Kamal will automatically pick it up
+<% instances = JSON.parse(File.read('vps_instances.json')) rescue [] %>
+servers:
+<% instances.each do |inst| %>
+  - <%= inst['ip'] %>
+<% end %>
+
+registry:
+  server: ghcr.io
+  username: <%= github_username %>
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+ssh:
+  user: ubuntu
+  keys:
+    - ~/.ssh/ayb-deploy
+
+env:
+  secret:
+    # Secrets loaded from .kamal/secrets file
+    # Using __ separator for nested fields (e.g., AYB_AUTHENTICATION__FERNET_KEY)
+    - AYB_HOST
+    - AYB_PORT
+    - AYB_PUBLIC_URL
+    - AYB_DATABASE_URL
+    - AYB_DATA_PATH
+    - AYB_CORS__ORIGIN
+    - AYB_WEB__HOSTING_METHOD
+    - AYB_AUTHENTICATION__TOKEN_EXPIRATION_SECONDS
+    - AYB_ISOLATION__NSJAIL_PATH
+    - AYB_AUTHENTICATION__FERNET_KEY
+    - AYB_EMAIL__SMTP__HOST
+    - AYB_EMAIL__SMTP__PORT
+    - AYB_EMAIL__SMTP__USERNAME
+    - AYB_EMAIL__SMTP__PASSWORD
+    - AYB_EMAIL__SMTP__FROM
+    - AYB_EMAIL__SMTP__REPLY_TO
+
+# Volumes for persistent data
+volumes:
+  - "/var/ayb_data:/data"
+
+# Proxy configuration (Kamal 2.0+ uses kamal-proxy)
+proxy:
+  ssl: false  # Set to true if you want HTTPS
+  host: <%= domain %>
+  app_port: 5433
+  healthcheck:
+    path: /
+    interval: 10
+    timeout: 5
+
+# Builder configuration
+# Build from the git repository root (one level up) where Dockerfile is located
+# The Dockerfile just FROMs the public ghcr.io/marcua/ayb:latest image
+# This allows Kamal to add its required labels without maintaining a separate registry
+builder:
+  context: ..
+  arch: amd64
+
+retain_containers: 3
+readiness_delay: 7
+deploy_timeout: 30
+
+aliases:
+  console: app exec --interactive --reuse "ayb client"
+  logs-tail: app logs --follow
+  status: app containers
