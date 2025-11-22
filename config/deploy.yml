@@ -36,23 +36,22 @@ ssh:
 env:
   secret:
     # Secrets loaded from .kamal/secrets file
-    # Using __ separator for nested fields (e.g., AYB_AUTHENTICATION__FERNET_KEY)
-    - AYB_HOST
-    - AYB_PORT
-    - AYB_PUBLIC_URL
-    - AYB_DATABASE_URL
-    - AYB_DATA_PATH
-    - AYB_CORS__ORIGIN
-    - AYB_WEB__HOSTING_METHOD
-    - AYB_AUTHENTICATION__TOKEN_EXPIRATION_SECONDS
-    - AYB_ISOLATION__NSJAIL_PATH
-    - AYB_AUTHENTICATION__FERNET_KEY
-    - AYB_EMAIL__SMTP__HOST
-    - AYB_EMAIL__SMTP__PORT
-    - AYB_EMAIL__SMTP__USERNAME
-    - AYB_EMAIL__SMTP__PASSWORD
-    - AYB_EMAIL__SMTP__FROM
-    - AYB_EMAIL__SMTP__REPLY_TO
+    - AYB__HOST
+    - AYB__PORT
+    - AYB__PUBLIC_URL
+    - AYB__DATABASE_URL
+    - AYB__DATA_PATH
+    - AYB__CORS__ORIGIN
+    - AYB__WEB__HOSTING_METHOD
+    - AYB__AUTHENTICATION__TOKEN_EXPIRATION_SECONDS
+    - AYB__ISOLATION__NSJAIL_PATH
+    - AYB__AUTHENTICATION__FERNET_KEY
+    - AYB__EMAIL__SMTP__FROM
+    - AYB__EMAIL__SMTP__REPLY_TO
+    - AYB__EMAIL__SMTP__SMTP_HOST
+    - AYB__EMAIL__SMTP__SMTP_PORT
+    - AYB__EMAIL__SMTP__SMTP_USERNAME
+    - AYB__EMAIL__SMTP__SMTP_PASSWORD
 
 # Volumes for persistent data
 volumes:
@@ -60,11 +59,11 @@ volumes:
 
 # Proxy configuration (Kamal 2.0+ uses kamal-proxy)
 proxy:
-  ssl: false  # Set to true if you want HTTPS
+  ssl: true  # Automatic SSL via Let's Encrypt
   host: <%= domain %>
   app_port: 5433
   healthcheck:
-    path: /
+    path: /health
     interval: 10
     timeout: 5
 
